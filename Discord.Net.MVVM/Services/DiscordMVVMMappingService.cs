@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 
@@ -9,15 +7,13 @@ namespace Discord.Net.MVVM.Services
 {
     public class DiscordMVVMMappingService
     {
-        internal static ulong BotId { get; private set; }
+        private readonly DiscordSocketClient _discordSocketClient;
+
+        private readonly ConcurrentDictionary<ulong, ConcurrentDictionary<ulong, DiscordView>> _dmViewMapping = new();
 
         private readonly ConcurrentDictionary<ulong,
                 ConcurrentDictionary<ulong, ConcurrentDictionary<ulong, DiscordView>>>
             _guildViewMapping = new();
-
-        private readonly ConcurrentDictionary<ulong, ConcurrentDictionary<ulong, DiscordView>> _dmViewMapping = new();
-
-        private readonly DiscordSocketClient _discordSocketClient;
 
         public DiscordMVVMMappingService(
             DiscordSocketClient client)
@@ -39,18 +35,14 @@ namespace Discord.Net.MVVM.Services
             _discordSocketClient.Ready += async () => { BotId = _discordSocketClient.CurrentUser.Id; };
         }
 
+        internal static ulong BotId { get; private set; }
+
         private async Task DiscordSocketClientOnLeftGuild(SocketGuild guild)
         {
             if (_guildViewMapping.TryRemove(guild.Id, out var channelViews))
-            {
                 foreach (var channel in channelViews)
-                {
-                    foreach (var messageView in channel.Value)
-                    {
-                        await messageView.Value.DisposeAsync();
-                    }
-                }
-            }
+                foreach (var messageView in channel.Value)
+                    await messageView.Value.DisposeAsync();
         }
 
         private async Task DiscordSocketClientOnChannelDestroyed(SocketChannel channel)
@@ -58,25 +50,15 @@ namespace Discord.Net.MVVM.Services
             if (channel is IGuildChannel guildChannel)
             {
                 if (_guildViewMapping.TryGetValue(guildChannel.GuildId, out var channelViews))
-                {
                     if (channelViews.TryRemove(channel.Id, out var messageViews))
-                    {
                         foreach (var messageView in messageViews)
-                        {
                             await messageView.Value.DisposeAsync();
-                        }
-                    }
-                }
             }
             else
             {
                 if (_dmViewMapping.TryRemove(channel.Id, out var messageViews))
-                {
                     foreach (var messageView in messageViews)
-                    {
                         await messageView.Value.DisposeAsync();
-                    }
-                }
             }
         }
 
@@ -89,31 +71,17 @@ namespace Discord.Net.MVVM.Services
                 if (channel.Value is IGuildChannel guildChannel)
                 {
                     if (_guildViewMapping.TryGetValue(guildChannel.GuildId, out var channelViews))
-                    {
                         if (channelViews.TryGetValue(channel.Id, out var messageViews))
-                        {
                             foreach (var deletedMessage in messages)
-                            {
                                 if (messageViews.TryRemove(deletedMessage.Id, out var messageView))
-                                {
                                     await messageView.DisposeAsync();
-                                }
-                            }
-                        }
-                    }
                 }
                 else
                 {
                     if (_dmViewMapping.TryGetValue(channel.Id, out var messageViews))
-                    {
                         foreach (var deletedMessage in messages)
-                        {
                             if (messageViews.TryRemove(deletedMessage.Id, out var messageView))
-                            {
                                 await messageView.DisposeAsync();
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -127,25 +95,15 @@ namespace Discord.Net.MVVM.Services
                 if (channel.Value is IGuildChannel guildChannel)
                 {
                     if (_guildViewMapping.TryGetValue(guildChannel.GuildId, out var channelViews))
-                    {
                         if (channelViews.TryGetValue(channel.Id, out var messageViews))
-                        {
                             if (messageViews.TryRemove(message.Id, out var messageView))
-                            {
                                 await messageView.DisposeAsync();
-                            }
-                        }
-                    }
                 }
                 else
                 {
                     if (_dmViewMapping.TryGetValue(channel.Id, out var messageViews))
-                    {
                         if (messageViews.TryRemove(message.Id, out var messageView))
-                        {
                             await messageView.DisposeAsync();
-                        }
-                    }
                 }
             }
         }
@@ -156,12 +114,8 @@ namespace Discord.Net.MVVM.Services
             IEmote emote)
         {
             if (TryGetDiscordView(message, channel, out var view))
-            {
                 if (view.HandledEvents.HasFlag(DiscordEventBindings.ReactionsRemovedForEmote))
-                {
                     await view.ReactionsRemovedForEmote(message, channel, emote);
-                }
-            }
         }
 
         private async Task DiscordSocketClientOnInteractionCreated(SocketInteraction interaction)
@@ -174,31 +128,17 @@ namespace Discord.Net.MVVM.Services
                     if (componentInteraction.Channel is IGuildChannel guildChannel)
                     {
                         if (_guildViewMapping.TryGetValue(guildChannel.GuildId, out var channelViews))
-                        {
                             if (channelViews.TryGetValue(guildChannel.Id, out var messageViews))
-                            {
                                 if (messageViews.TryGetValue(componentInteraction.Message.Id, out var view))
-                                {
                                     if (view.HandledEvents.HasFlag(DiscordEventBindings.InteractionCreated))
-                                    {
                                         await view.InteractionCreated(componentInteraction);
-                                    }
-                                }
-                            }
-                        }
                     }
                     else
                     {
                         if (_dmViewMapping.TryGetValue(componentInteraction.Channel.Id, out var messageViews))
-                        {
                             if (messageViews.TryGetValue(componentInteraction.Message.Id, out var view))
-                            {
                                 if (view.HandledEvents.HasFlag(DiscordEventBindings.InteractionCreated))
-                                {
                                     await view.InteractionCreated(componentInteraction);
-                                }
-                            }
-                        }
                     }
 
                     break;
@@ -210,12 +150,8 @@ namespace Discord.Net.MVVM.Services
             Cacheable<IMessageChannel, ulong> channel)
         {
             if (TryGetDiscordView(message, channel, out var view))
-            {
                 if (view.HandledEvents.HasFlag(DiscordEventBindings.ReactionsCleared))
-                {
                     await view.ReactionsCleared(message, channel);
-                }
-            }
         }
 
         private async Task DiscordSocketClientOnReactionRemoved(
@@ -224,12 +160,8 @@ namespace Discord.Net.MVVM.Services
             SocketReaction reaction)
         {
             if (TryGetDiscordView(message, channel, out var view))
-            {
                 if (view.HandledEvents.HasFlag(DiscordEventBindings.ReactionRemoved))
-                {
                     await view.ReactionRemoved(message, channel, reaction);
-                }
-            }
         }
 
         private async Task DiscordSocketClientOnReactionAdded(
@@ -238,12 +170,8 @@ namespace Discord.Net.MVVM.Services
             SocketReaction reaction)
         {
             if (TryGetDiscordView(message, channel, out var view))
-            {
                 if (view.HandledEvents.HasFlag(DiscordEventBindings.ReactionAdded))
-                {
                     await view.ReactionAdded(message, channel, reaction);
-                }
-            }
         }
 
         private bool TryGetDiscordView(
@@ -259,25 +187,15 @@ namespace Discord.Net.MVVM.Services
             if (channel.Value is IGuildChannel guildChannel)
             {
                 if (_guildViewMapping.TryGetValue(guildChannel.GuildId, out var channelViews))
-                {
                     if (channelViews.TryGetValue(channel.Id, out var messageViews))
-                    {
                         if (messageViews.TryGetValue(message.Id, out view))
-                        {
                             return true;
-                        }
-                    }
-                }
             }
             else
             {
                 if (_dmViewMapping.TryGetValue(channel.Id, out var messageViews))
-                {
                     if (messageViews.TryGetValue(message.Id, out view))
-                    {
                         return true;
-                    }
-                }
             }
 
             return false;
@@ -301,13 +219,14 @@ namespace Discord.Net.MVVM.Services
                     }
                     else
                     {
-                        channelViews.TryAdd(guildChannel.Id, new());
+                        channelViews.TryAdd(guildChannel.Id, new ConcurrentDictionary<ulong, DiscordView>());
                         goto ChannelAddStep;
                     }
                 }
                 else
                 {
-                    _guildViewMapping.TryAdd(guildChannel.GuildId, new());
+                    _guildViewMapping.TryAdd(guildChannel.GuildId,
+                        new ConcurrentDictionary<ulong, ConcurrentDictionary<ulong, DiscordView>>());
                     goto GuildAddStep;
                 }
             }
@@ -320,7 +239,7 @@ namespace Discord.Net.MVVM.Services
                 }
                 else
                 {
-                    _dmViewMapping.TryAdd(channel.Id, new());
+                    _dmViewMapping.TryAdd(channel.Id, new ConcurrentDictionary<ulong, DiscordView>());
                     goto DmChannelAddStep;
                 }
             }
@@ -331,25 +250,15 @@ namespace Discord.Net.MVVM.Services
             if (guildId.HasValue)
             {
                 if (_guildViewMapping.TryGetValue(guildId.Value, out var channelViews))
-                {
                     if (channelViews.TryGetValue(channelId, out var messageViews))
-                    {
                         if (messageViews.TryRemove(messageId, out var messageView))
-                        {
                             await messageView.DisposeAsync();
-                        }
-                    }
-                }
             }
             else
             {
                 if (_dmViewMapping.TryGetValue(channelId, out var messageViews))
-                {
                     if (messageViews.TryRemove(messageId, out var messageView))
-                    {
                         await messageView.DisposeAsync();
-                    }
-                }
             }
         }
     }

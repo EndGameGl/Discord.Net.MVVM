@@ -2,7 +2,7 @@
 {
     public class DiscordReactionRequest
     {
-        public IEmote Reaction { get; init; } 
+        public IEmote Reaction { get; init; }
         public DiscordReactionRequestType Type { get; init; }
     }
 }

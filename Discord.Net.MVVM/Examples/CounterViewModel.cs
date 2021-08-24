@@ -7,31 +7,9 @@ namespace Discord.Net.MVVM.Examples
 {
     public class CounterViewModel : DiscordViewModel
     {
-        private int _count = 0;
+        private int _count;
 
-        private bool isVocal = false;
-
-        private DiscordButton IncreaseCountButton = new("IncreaseId", "+1")
-        {
-            IsControlActive = true
-        };
-
-        private DiscordButton DescreaseCountButton = new("DecreaseId", "-1")
-        {
-            IsControlActive = true
-        };
-
-        private DiscordButton ChangeButtonNaming = new("ChangeNaming", "Change naming")
-        {
-            IsControlActive = true
-        };
-
-        private DiscordButton EnableSelectMenuButton = new("EnableSelectMenuButton", "Enable select menu")
-        {
-            IsControlActive = true
-        };
-
-        private DiscordSelectMenu ActionSelectMenu = new()
+        private readonly DiscordSelectMenu ActionSelectMenu = new()
         {
             IsControlActive = false,
             MinSelectableValues = 1,
@@ -45,9 +23,27 @@ namespace Discord.Net.MVVM.Examples
             }
         };
 
-        public CounterViewModel()
+        private readonly DiscordButton ChangeButtonNaming = new("ChangeNaming", "Change naming")
         {
-        }
+            IsControlActive = true
+        };
+
+        private readonly DiscordButton DescreaseCountButton = new("DecreaseId", "-1")
+        {
+            IsControlActive = true
+        };
+
+        private readonly DiscordButton EnableSelectMenuButton = new("EnableSelectMenuButton", "Enable select menu")
+        {
+            IsControlActive = true
+        };
+
+        private readonly DiscordButton IncreaseCountButton = new("IncreaseId", "+1")
+        {
+            IsControlActive = true
+        };
+
+        private bool isVocal;
 
         public override DiscordEventBindings HandledEvents { get; } =
             DiscordEventBindings.ReactionAdded |
@@ -65,19 +61,19 @@ namespace Discord.Net.MVVM.Examples
 
             ChangeButtonNaming.Style = ButtonStyle.Secondary;
 
-            IncreaseCountButton.OnClick += async (_) =>
+            IncreaseCountButton.OnClick += async _ =>
             {
                 _count++;
                 HandleValueChange();
             };
 
-            DescreaseCountButton.OnClick += async (_) =>
+            DescreaseCountButton.OnClick += async _ =>
             {
                 _count--;
                 HandleValueChange();
             };
 
-            ChangeButtonNaming.OnClick += async (_) =>
+            ChangeButtonNaming.OnClick += async _ =>
             {
                 if (isVocal)
                 {
@@ -93,7 +89,7 @@ namespace Discord.Net.MVVM.Examples
                 }
             };
 
-            EnableSelectMenuButton.OnClick += async (_) =>
+            EnableSelectMenuButton.OnClick += async _ =>
             {
                 ActionSelectMenu.IsControlActive = !ActionSelectMenu.IsControlActive;
                 switch (ActionSelectMenu.IsControlActive)
@@ -154,7 +150,7 @@ namespace Discord.Net.MVVM.Examples
             else
             {
                 ViewBody.Content.Modify(null);
-                var eb = new EmbedBuilder()
+                var eb = new EmbedBuilder
                 {
                     Title = "Count is not even",
                     Description = $"Count is {_count}"

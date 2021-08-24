@@ -6,10 +6,23 @@ using Discord.WebSocket;
 namespace Discord.Net.MVVM.View.Controls
 {
     /// <summary>
-    /// Represents button that is clicked
+    ///     Represents button that is clicked
     /// </summary>
     public class DiscordButton : DiscordControl
     {
+        public DiscordButton(string id, string label)
+        {
+            Id = id;
+            Label = label;
+        }
+
+        public bool Disabled { get; set; } = false;
+        public IEmote Emote { get; set; }
+        public ButtonStyle Style { get; set; } = ButtonStyle.Success;
+        public string Url { get; set; } = null;
+
+        public override DiscordControlType Type => DiscordControlType.Button;
+
         public override IMessageComponent ToComponent()
         {
             var bb = new ButtonBuilder
@@ -30,27 +43,15 @@ namespace Discord.Net.MVVM.View.Controls
                 await OnClick.Invoke(interactionComponent);
         }
 
-        internal override async Task FireEvent(SocketMessageComponent interactionComponent, IReadOnlyCollection<string> values)
+        internal override async Task FireEvent(SocketMessageComponent interactionComponent,
+            IReadOnlyCollection<string> values)
         {
             throw new NotImplementedException();
         }
 
-        public bool Disabled { get; set; } = false;
-        public IEmote Emote { get; set; }
-        public ButtonStyle Style { get; set; } = ButtonStyle.Success;
-        public string Url { get; set; } = null;
-
-        public override DiscordControlType Type => DiscordControlType.Button;
-
         /// <summary>
-        /// Is called when this button is clicked
+        ///     Is called when this button is clicked
         /// </summary>
         public event Func<SocketMessageComponent, Task> OnClick;
-
-        public DiscordButton(string id, string label)
-        {
-            Id = id;
-            Label = label;
-        }
     }
 }

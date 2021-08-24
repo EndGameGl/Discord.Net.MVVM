@@ -6,10 +6,10 @@ namespace Discord.Net.MVVM.View
 {
     public class DiscordTrackableReactions : IDiscordMessageTrackablePart
     {
-        public Queue<DiscordReactionRequest> ReactionRequests { get; } = new Queue<DiscordReactionRequest>();
+        public Queue<DiscordReactionRequest> ReactionRequests { get; } = new();
 
         public bool HasValue => ReactionRequests.Any();
-        public bool UpdateNeeded { get; private set; } = false;
+        public bool UpdateNeeded { get; private set; }
 
         public void SetUpdateNeeded(bool value)
         {
@@ -23,7 +23,7 @@ namespace Discord.Net.MVVM.View
 
         public void AddReaction(IEmote reaction)
         {
-            ReactionRequests.Enqueue(new DiscordReactionRequest()
+            ReactionRequests.Enqueue(new DiscordReactionRequest
             {
                 Reaction = reaction,
                 Type = DiscordReactionRequestType.Add
@@ -33,7 +33,7 @@ namespace Discord.Net.MVVM.View
 
         public void RemoveReaction(IEmote reaction)
         {
-            ReactionRequests.Enqueue(new DiscordReactionRequest()
+            ReactionRequests.Enqueue(new DiscordReactionRequest
             {
                 Reaction = reaction,
                 Type = DiscordReactionRequestType.RemoveSelf
@@ -43,7 +43,7 @@ namespace Discord.Net.MVVM.View
 
         public void RemoveAllReactionsOfType(IEmote reaction)
         {
-            ReactionRequests.Enqueue(new DiscordReactionRequest()
+            ReactionRequests.Enqueue(new DiscordReactionRequest
             {
                 Reaction = reaction,
                 Type = DiscordReactionRequestType.RemoveAllOfType
@@ -53,7 +53,7 @@ namespace Discord.Net.MVVM.View
 
         public void RemoveAllReactions(IEmote reaction)
         {
-            ReactionRequests.Enqueue(new DiscordReactionRequest()
+            ReactionRequests.Enqueue(new DiscordReactionRequest
             {
                 Reaction = reaction,
                 Type = DiscordReactionRequestType.RemoveAll

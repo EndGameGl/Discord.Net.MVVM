@@ -6,19 +6,16 @@ namespace Discord.Net.MVVM.View
 {
     public class DiscordTrackableComponent : IDiscordMessageTrackablePart
     {
+        public DiscordTrackableComponent()
+        {
+            for (var i = 0; i < 5; i++) ActionRows[i] = new DiscordActionRow();
+        }
+
         public DiscordActionRow[] ActionRows { get; } = new DiscordActionRow[5];
         public ConcurrentDictionary<string, DiscordControl> ButtonMappings { get; } = new();
 
         public bool HasValue => !ButtonMappings.IsEmpty;
         public bool UpdateNeeded { get; private set; }
-
-        public DiscordTrackableComponent()
-        {
-            for (var i = 0; i < 5; i++)
-            {
-                ActionRows[i] = new DiscordActionRow();
-            }
-        }
 
         public void SetUpdateNeeded(bool value)
         {
@@ -27,10 +24,7 @@ namespace Discord.Net.MVVM.View
 
         public void ResetContent()
         {
-            for (var i = 0; i < 5; i++)
-            {
-                ActionRows[i] = new DiscordActionRow();
-            }
+            for (var i = 0; i < 5; i++) ActionRows[i] = new DiscordActionRow();
         }
 
         public MessageComponent BuildComponent()
@@ -41,12 +35,8 @@ namespace Discord.Net.MVVM.View
             };
 
             foreach (var row in ActionRows)
-            {
                 if (row.IsBuildable())
-                {
                     cb.ActionRows.Add(row.GetBuilder());
-                }
-            }
 
             return cb.Build();
         }

@@ -2,6 +2,7 @@
 {
     public class DiscordTrackableEmbed : IDiscordMessageTrackablePart
     {
+        public Embed Embed { get; private set; }
         public bool HasValue => Embed is not null;
         public bool UpdateNeeded { get; private set; }
 
@@ -14,8 +15,6 @@
         {
             ModifyContent(null);
         }
-
-        public Embed Embed { get; private set; }
 
         public void ModifyContent(Embed value)
         {
@@ -32,7 +31,7 @@
                 SetUpdateNeeded(true);
                 return;
             }
-            
+
             if (!AreEmbedsEqual(Embed, value))
             {
                 Embed = value;
@@ -46,10 +45,10 @@
                 return false;
 
             #region Author property check
-            
+
             if (first.Author.HasValue != second.Author.HasValue)
                 return false;
-            if (first.Author.HasValue == true && second.Author.HasValue == true)
+            if (first.Author.HasValue && second.Author.HasValue)
             {
                 var firstAuthorValue = first.Author.Value;
                 var secondAuthorValue = second.Author.Value;
@@ -62,21 +61,21 @@
                 if (firstAuthorValue.ProxyIconUrl != secondAuthorValue.ProxyIconUrl)
                     return false;
             }
-            
+
             #endregion
 
             #region Color property check
-            
+
             if (first.Color.HasValue != second.Color.HasValue)
                 return false;
-            if (first.Color.HasValue == true && second.Color.HasValue == true)
+            if (first.Color.HasValue && second.Color.HasValue)
             {
                 var firstColorValue = first.Color.Value;
                 var secondColorValue = second.Color.Value;
                 if (firstColorValue.RawValue != secondColorValue.RawValue)
                     return false;
             }
-            
+
             #endregion
 
             if (first.Description != second.Description)
@@ -105,7 +104,7 @@
 
             if (first.Footer.HasValue != second.Footer.HasValue)
                 return false;
-            
+
             if (first.Footer.HasValue && second.Footer.HasValue)
             {
                 var firstFooterValue = first.Footer.Value;
@@ -124,12 +123,12 @@
 
             if (first.Image.HasValue != second.Image.HasValue)
                 return false;
-            
+
             if (first.Image.HasValue && second.Image.HasValue)
             {
                 var firstImageValue = first.Image.Value;
                 var secondImageValue = second.Image.Value;
-                
+
                 if (firstImageValue.Height != secondImageValue.Height)
                     return false;
                 if (firstImageValue.Width != secondImageValue.Width)
@@ -141,17 +140,17 @@
             }
 
             #endregion
-            
+
             #region Provider property check
 
             if (first.Provider.HasValue != second.Provider.HasValue)
                 return false;
-            
+
             if (first.Provider.HasValue && second.Provider.HasValue)
             {
                 var firstProviderValue = first.Provider.Value;
                 var secondProviderValue = second.Provider.Value;
-                
+
                 if (firstProviderValue.Name != secondProviderValue.Name)
                     return false;
                 if (firstProviderValue.Url != secondProviderValue.Url)
@@ -159,17 +158,17 @@
             }
 
             #endregion
-            
+
             #region Thumbnail property check
 
             if (first.Thumbnail.HasValue != second.Thumbnail.HasValue)
                 return false;
-            
+
             if (first.Thumbnail.HasValue && second.Thumbnail.HasValue)
             {
                 var firstThumbnailValue = first.Thumbnail.Value;
                 var secondThumbnailValue = second.Thumbnail.Value;
-                
+
                 if (firstThumbnailValue.Height != secondThumbnailValue.Height)
                     return false;
                 if (firstThumbnailValue.Url != secondThumbnailValue.Url)
@@ -181,7 +180,7 @@
             }
 
             #endregion
-            
+
             if (first.Timestamp != second.Timestamp)
                 return false;
 
@@ -193,17 +192,17 @@
 
             if (first.Url != second.Url)
                 return false;
-            
+
             #region Video property check
 
             if (first.Video.HasValue != second.Video.HasValue)
                 return false;
-            
+
             if (first.Video.HasValue && second.Video.HasValue)
             {
                 var firstVideoValue = first.Video.Value;
                 var secondVideoValue = second.Video.Value;
-                
+
                 if (firstVideoValue.Height != secondVideoValue.Height)
                     return false;
                 if (firstVideoValue.Width != secondVideoValue.Width)

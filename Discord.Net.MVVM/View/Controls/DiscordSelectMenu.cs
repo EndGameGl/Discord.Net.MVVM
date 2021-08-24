@@ -25,15 +25,9 @@ namespace Discord.Net.MVVM.View.Controls
                 Placeholder = Placeholder
             };
 
-            if (Options.Count > 0)
-            {
-                selectMenuBuilder.Options = new List<SelectMenuOptionBuilder>();
-            }
+            if (Options.Count > 0) selectMenuBuilder.Options = new List<SelectMenuOptionBuilder>();
 
-            foreach (var option in Options)
-            {
-                selectMenuBuilder.Options.Add(option.GetBuilder());
-            }
+            foreach (var option in Options) selectMenuBuilder.Options.Add(option.GetBuilder());
 
             return selectMenuBuilder.Build();
         }
@@ -42,15 +36,13 @@ namespace Discord.Net.MVVM.View.Controls
 
         internal override async Task FireEvent(SocketMessageComponent interactionComponent)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
-        internal override async Task FireEvent(SocketMessageComponent interactionComponent, IReadOnlyCollection<string> values)
+        internal override async Task FireEvent(SocketMessageComponent interactionComponent,
+            IReadOnlyCollection<string> values)
         {
-            if (OnSelect is not null)
-            {
-                await OnSelect.Invoke(interactionComponent, values);
-            }
+            if (OnSelect is not null) await OnSelect.Invoke(interactionComponent, values);
         }
     }
 }

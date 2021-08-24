@@ -5,11 +5,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Discord.Net.MVVM\Discord.Net.MVVM.csproj" />
+        <ProjectReference Include="..\Discord.Net.MVVM\Discord.Net.MVVM.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="obj\Release\net5.0" />
+        <Folder Include="obj\Release\net5.0"/>
     </ItemGroup>
 
 </Project>

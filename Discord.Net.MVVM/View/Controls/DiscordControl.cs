@@ -13,6 +13,8 @@ namespace Discord.Net.MVVM.View.Controls
 
         public abstract IMessageComponent ToComponent();
         internal abstract Task FireEvent(SocketMessageComponent interactionComponent);
-        internal abstract Task FireEvent(SocketMessageComponent interactionComponent, IReadOnlyCollection<string> values);
+
+        internal abstract Task FireEvent(SocketMessageComponent interactionComponent,
+            IReadOnlyCollection<string> values);
     }
 }

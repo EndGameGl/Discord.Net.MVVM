@@ -2,9 +2,9 @@
 {
     public class DiscordTrackableContent : IDiscordMessageTrackablePart
     {
+        public string Content { get; private set; }
         public bool HasValue => !string.IsNullOrWhiteSpace(Content);
         public bool UpdateNeeded { get; private set; }
-        public string Content { get; private set; }
 
         public void SetUpdateNeeded(bool value)
         {

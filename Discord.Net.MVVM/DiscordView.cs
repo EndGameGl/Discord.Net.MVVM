@@ -9,16 +9,32 @@ using Discord.WebSocket;
 namespace Discord.Net.MVVM
 {
     /// <summary>
-    /// Class that handles discord events and passes them down to it's <see cref="DiscordViewModel"/>
+    ///     Class that handles discord events and passes them down to it's <see cref="DiscordViewModel" />
     /// </summary>
     public sealed class DiscordView : IAsyncDisposable
     {
         private readonly DiscordMVVMMappingService _mappingService;
+
+        internal DiscordView(
+            DiscordViewModel viewModel,
+            DiscordEventBindings eventBindings,
+            DiscordMVVMMappingService service)
+        {
+            ViewModel = viewModel;
+            HandledEvents = eventBindings;
+            _mappingService = service;
+        }
+
         public RestUserMessage Message { get; private set; }
         private DiscordViewBody Body { get; } = new();
         private DiscordViewModel ViewModel { get; }
 
         public DiscordEventBindings HandledEvents { get; }
+
+        public async ValueTask DisposeAsync()
+        {
+            await ViewModel.DisposeAsync();
+        }
 
         public async Task Render(IMessageChannel channel)
         {
@@ -27,9 +43,9 @@ namespace Discord.Net.MVVM
             await ViewModel.OnCreate();
 
             Message = (RestUserMessage)await channel.SendMessageAsync(
-                text: Body.Content.Content,
+                Body.Content.Content,
                 false,
-                embed: Body.Embed.Embed,
+                Body.Embed.Embed,
                 component: Body.Components.BuildComponent());
         }
 
@@ -61,9 +77,7 @@ namespace Discord.Net.MVVM
                 if (Body.Reactions.ReactionRequests.Count > 1)
                 {
                     while (Body.Reactions.ReactionRequests.TryDequeue(out var reactionRequest))
-                    {
                         await HandleReactionRequest(reactionRequest);
-                    }
                 }
                 else
                 {
@@ -115,37 +129,18 @@ namespace Discord.Net.MVVM
             {
                 case ComponentType.Button:
                     if (Body.Components.ButtonMappings.TryGetValue(interaction.Data.CustomId, out var button))
-                    {
                         await button.FireEvent(interaction);
-                    }
 
                     break;
                 case ComponentType.SelectMenu:
                     if (Body.Components.ButtonMappings.TryGetValue(interaction.Data.CustomId, out var selectMenu))
-                    {
                         await selectMenu.FireEvent(interaction, interaction.Data.Values);
-                    }
 
                     break;
             }
 
             await ViewModel.HandleInteractionCreated(interaction);
             await AfterEventHandled();
-        }
-
-        internal DiscordView(
-            DiscordViewModel viewModel,
-            DiscordEventBindings eventBindings,
-            DiscordMVVMMappingService service)
-        {
-            ViewModel = viewModel;
-            HandledEvents = eventBindings;
-            _mappingService = service;
-        }
-
-        public async ValueTask DisposeAsync()
-        {
-            await ViewModel.DisposeAsync();
         }
 
         private async Task HandleReactionRequest(DiscordReactionRequest request)
@@ -174,16 +169,10 @@ namespace Discord.Net.MVVM
             if (ViewModel.IsDisposalRequested)
             {
                 await ViewModel.DisposeAsync();
-                if (ViewModel.DeleteMessageAfterDisposal)
-                {
-                    await Message.DeleteAsync();
-                }
+                if (ViewModel.DeleteMessageAfterDisposal) await Message.DeleteAsync();
 
                 ulong? guildId = null;
-                if (Message.Channel is IGuildChannel guildChannel)
-                {
-                    guildId = guildChannel.GuildId;
-                }
+                if (Message.Channel is IGuildChannel guildChannel) guildId = guildChannel.GuildId;
 
                 await _mappingService.RemoveView(Message.Channel.Id, Message.Id, guildId);
             }
