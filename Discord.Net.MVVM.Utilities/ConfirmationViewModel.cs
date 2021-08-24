@@ -7,8 +7,8 @@ namespace Discord.Net.MVVM.Utilities
     public class ConfirmationViewModel : DiscordViewModel
     {
         private readonly string _text;
-        private readonly Action _onSuccess;
-        private readonly Action _onDecline;
+        private Action _onSuccess;
+        private Action _onDecline;
 
         private readonly DiscordButton _confirmButton = new DiscordButton("confirm", "Accept")
         {
@@ -29,16 +29,9 @@ namespace Discord.Net.MVVM.Utilities
             ViewBody.Components.AddButton(_confirmButton, 0);
             ViewBody.Components.AddButton(_declineButton, 0);
 
-            _confirmButton.OnClick += async () =>
-            {
-                _onSuccess?.Invoke();
-            };
+            _confirmButton.OnClick += async (_) => { _onSuccess?.Invoke(); };
 
-            _declineButton.OnClick += async () =>
-            {
-                _onDecline?.Invoke();
-            };
-
+            _declineButton.OnClick += async (_) => { _onDecline?.Invoke(); };
         }
 
         public ConfirmationViewModel(string text, Action onSuccess, Action onDecline)
@@ -46,6 +39,14 @@ namespace Discord.Net.MVVM.Utilities
             _text = text;
             _onSuccess = onSuccess;
             _onDecline = onDecline;
+        }
+
+        public override ValueTask DisposeAsync()
+        {
+            _onSuccess = null;
+            _onDecline = null;
+
+            return ValueTask.CompletedTask;
         }
     }
 }

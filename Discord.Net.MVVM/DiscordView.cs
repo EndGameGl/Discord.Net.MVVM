@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using Discord.Net.MVVM.Services;
 using Discord.Net.MVVM.View;
-using Discord.Net.MVVM.View.Controls;
 using Discord.Net.MVVM.View.Reactions;
 using Discord.Rest;
 using Discord.WebSocket;
@@ -14,6 +13,7 @@ namespace Discord.Net.MVVM
     /// </summary>
     public sealed class DiscordView : IAsyncDisposable
     {
+        private readonly DiscordMVVMMappingService _mappingService;
         public RestUserMessage Message { get; private set; }
         private DiscordViewBody Body { get; } = new();
         private DiscordViewModel ViewModel { get; }
@@ -22,8 +22,8 @@ namespace Discord.Net.MVVM
 
         public async Task Render(IMessageChannel channel)
         {
-            ViewModel.InjectBody(Body);
-            
+            ViewModel.InjectData(Body);
+
             await ViewModel.OnCreate();
 
             Message = (RestUserMessage)await channel.SendMessageAsync(
@@ -79,8 +79,7 @@ namespace Discord.Net.MVVM
             SocketReaction reaction)
         {
             await ViewModel.HandleReactionAdded(reaction);
-            if (Body.HasAnyUpdates)
-                await Update();
+            await AfterEventHandled();
         }
 
         public async Task ReactionRemoved(
@@ -89,8 +88,7 @@ namespace Discord.Net.MVVM
             SocketReaction reaction)
         {
             await ViewModel.HandleReactionRemoved(reaction);
-            if (Body.HasAnyUpdates)
-                await Update();
+            await AfterEventHandled();
         }
 
         public async Task ReactionsCleared(
@@ -98,8 +96,7 @@ namespace Discord.Net.MVVM
             Cacheable<IMessageChannel, ulong> channel)
         {
             await ViewModel.HandleReactionsCleared();
-            if (Body.HasAnyUpdates)
-                await Update();
+            await AfterEventHandled();
         }
 
         public async Task ReactionsRemovedForEmote(
@@ -108,8 +105,7 @@ namespace Discord.Net.MVVM
             IEmote emote)
         {
             await ViewModel.HandleReactionsRemovedForEmote(emote);
-            if (Body.HasAnyUpdates)
-                await Update();
+            await AfterEventHandled();
         }
 
         public async Task InteractionCreated(
@@ -120,27 +116,31 @@ namespace Discord.Net.MVVM
                 case ComponentType.Button:
                     if (Body.Components.ButtonMappings.TryGetValue(interaction.Data.CustomId, out var button))
                     {
-                        await button.FireEvent();
+                        await button.FireEvent(interaction);
                     }
 
                     break;
                 case ComponentType.SelectMenu:
                     if (Body.Components.ButtonMappings.TryGetValue(interaction.Data.CustomId, out var selectMenu))
                     {
-                        await selectMenu.FireEvent(interaction.Data.Values);
+                        await selectMenu.FireEvent(interaction, interaction.Data.Values);
                     }
+
                     break;
             }
 
             await ViewModel.HandleInteractionCreated(interaction);
-            if (Body.HasAnyUpdates)
-                await Update();
+            await AfterEventHandled();
         }
 
-        internal DiscordView(DiscordViewModel viewModel, DiscordEventBindings eventBindings)
+        internal DiscordView(
+            DiscordViewModel viewModel,
+            DiscordEventBindings eventBindings,
+            DiscordMVVMMappingService service)
         {
             ViewModel = viewModel;
             HandledEvents = eventBindings;
+            _mappingService = service;
         }
 
         public async ValueTask DisposeAsync()
@@ -164,6 +164,28 @@ namespace Discord.Net.MVVM
                 case DiscordReactionRequestType.RemoveAll:
                     await Message.RemoveAllReactionsAsync();
                     break;
+            }
+        }
+
+        private async Task AfterEventHandled()
+        {
+            if (Body.HasAnyUpdates)
+                await Update();
+            if (ViewModel.IsDisposalRequested)
+            {
+                await ViewModel.DisposeAsync();
+                if (ViewModel.DeleteMessageAfterDisposal)
+                {
+                    await Message.DeleteAsync();
+                }
+
+                ulong? guildId = null;
+                if (Message.Channel is IGuildChannel guildChannel)
+                {
+                    guildId = guildChannel.GuildId;
+                }
+
+                await _mappingService.RemoveView(Message.Channel.Id, Message.Id, guildId);
             }
         }
     }

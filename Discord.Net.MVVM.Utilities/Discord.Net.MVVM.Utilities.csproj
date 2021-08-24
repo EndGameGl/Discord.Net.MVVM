@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Discord.Net.MVVM\Discord.Net.MVVM.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="obj\Release\net5.0" />
+    </ItemGroup>
+
+</Project>

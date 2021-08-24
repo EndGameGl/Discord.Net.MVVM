@@ -11,6 +11,11 @@
             UpdateNeeded = value;
         }
 
+        public void ResetContent()
+        {
+            Modify(null);
+        }
+
         public void Modify(string value)
         {
             if (Content == value)

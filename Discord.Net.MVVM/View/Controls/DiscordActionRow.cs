@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Discord.WebSocket;
 
 namespace Discord.Net.MVVM.View.Controls
 {
@@ -20,12 +21,12 @@ namespace Discord.Net.MVVM.View.Controls
             return builder.Build();
         }
 
-        internal override async Task FireEvent()
+        internal override async Task FireEvent(SocketMessageComponent interactionComponent)
         {
             throw new System.NotImplementedException();
         }
 
-        internal override async Task FireEvent(IReadOnlyCollection<string> values)
+        internal override async Task FireEvent(SocketMessageComponent interactionComponent, IReadOnlyCollection<string> values)
         {
             throw new System.NotImplementedException();
         }

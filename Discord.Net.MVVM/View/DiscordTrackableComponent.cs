@@ -25,6 +25,14 @@ namespace Discord.Net.MVVM.View
             UpdateNeeded = true;
         }
 
+        public void ResetContent()
+        {
+            for (var i = 0; i < 5; i++)
+            {
+                ActionRows[i] = new DiscordActionRow();
+            }
+        }
+
         public MessageComponent BuildComponent()
         {
             var cb = new ComponentBuilder

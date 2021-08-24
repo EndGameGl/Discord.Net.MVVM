@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Discord.WebSocket;
 
 namespace Discord.Net.MVVM.View.Controls
 {
@@ -11,7 +12,7 @@ namespace Discord.Net.MVVM.View.Controls
         public bool IsControlActive { get; set; }
 
         public abstract IMessageComponent ToComponent();
-        internal abstract Task FireEvent();
-        internal abstract Task FireEvent(IReadOnlyCollection<string> values);
+        internal abstract Task FireEvent(SocketMessageComponent interactionComponent);
+        internal abstract Task FireEvent(SocketMessageComponent interactionComponent, IReadOnlyCollection<string> values);
     }
 }

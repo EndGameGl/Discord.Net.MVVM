@@ -10,6 +10,11 @@
             UpdateNeeded = value;
         }
 
+        public void ResetContent()
+        {
+            ModifyContent(null);
+        }
+
         public Embed Embed { get; private set; }
 
         public void ModifyContent(Embed value)

@@ -16,6 +16,11 @@ namespace Discord.Net.MVVM.View
             UpdateNeeded = value;
         }
 
+        public void ResetContent()
+        {
+            ReactionRequests.Clear();
+        }
+
         public void AddReaction(IEmote reaction)
         {
             ReactionRequests.Enqueue(new DiscordReactionRequest()

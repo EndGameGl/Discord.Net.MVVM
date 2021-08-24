@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Discord.WebSocket;
 
 namespace Discord.Net.MVVM.View.Controls
 {
@@ -23,13 +24,13 @@ namespace Discord.Net.MVVM.View.Controls
             return bb.Build();
         }
 
-        internal override async Task FireEvent()
+        internal override async Task FireEvent(SocketMessageComponent interactionComponent)
         {
             if (OnClick is not null)
-                await OnClick.Invoke();
+                await OnClick.Invoke(interactionComponent);
         }
 
-        internal override async Task FireEvent(IReadOnlyCollection<string> values)
+        internal override async Task FireEvent(SocketMessageComponent interactionComponent, IReadOnlyCollection<string> values)
         {
             throw new NotImplementedException();
         }
@@ -44,7 +45,7 @@ namespace Discord.Net.MVVM.View.Controls
         /// <summary>
         /// Is called when this button is clicked
         /// </summary>
-        public event Func<Task> OnClick;
+        public event Func<SocketMessageComponent, Task> OnClick;
 
         public DiscordButton(string id, string label)
         {

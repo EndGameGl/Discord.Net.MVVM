@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Discord.Net.MVVM.Services;
 using Discord.Net.MVVM.View;
 using Discord.WebSocket;
 
@@ -7,9 +8,11 @@ namespace Discord.Net.MVVM
 {
     public abstract class DiscordViewModel : IAsyncDisposable
     {
+        internal bool IsDisposalRequested { get; private set; } = false;
+        internal bool DeleteMessageAfterDisposal { get; private set; } = true;
         protected DiscordViewBody ViewBody { get; private set; }
         public abstract DiscordEventBindings HandledEvents { get; }
-        
+
         public virtual async Task OnCreate()
         {
         }
@@ -37,12 +40,17 @@ namespace Discord.Net.MVVM
 
         public virtual async ValueTask DisposeAsync()
         {
-            
         }
 
-        internal void InjectBody(DiscordViewBody viewBody)
+        internal void InjectData(DiscordViewBody viewBody)
         {
             ViewBody = viewBody;
+        }
+
+        protected async Task RequestDisposal(bool deleteMessage)
+        {
+            IsDisposalRequested = true;
+            DeleteMessageAfterDisposal = deleteMessage;
         }
     }
 }

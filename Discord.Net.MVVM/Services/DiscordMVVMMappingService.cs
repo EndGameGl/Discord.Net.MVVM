@@ -285,7 +285,7 @@ namespace Discord.Net.MVVM.Services
 
         public async Task CreateView(DiscordViewModel viewModel, IMessageChannel channel)
         {
-            var view = new DiscordView(viewModel, viewModel.HandledEvents);
+            var view = new DiscordView(viewModel, viewModel.HandledEvents, this);
 
             await view.Render(channel);
 
@@ -322,6 +322,33 @@ namespace Discord.Net.MVVM.Services
                 {
                     _dmViewMapping.TryAdd(channel.Id, new());
                     goto DmChannelAddStep;
+                }
+            }
+        }
+
+        public async Task RemoveView(ulong channelId, ulong messageId, ulong? guildId)
+        {
+            if (guildId.HasValue)
+            {
+                if (_guildViewMapping.TryGetValue(guildId.Value, out var channelViews))
+                {
+                    if (channelViews.TryGetValue(channelId, out var messageViews))
+                    {
+                        if (messageViews.TryRemove(messageId, out var messageView))
+                        {
+                            await messageView.DisposeAsync();
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (_dmViewMapping.TryGetValue(channelId, out var messageViews))
+                {
+                    if (messageViews.TryRemove(messageId, out var messageView))
+                    {
+                        await messageView.DisposeAsync();
+                    }
                 }
             }
         }

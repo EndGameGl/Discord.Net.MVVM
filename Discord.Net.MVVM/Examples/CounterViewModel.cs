@@ -65,19 +65,19 @@ namespace Discord.Net.MVVM.Examples
 
             ChangeButtonNaming.Style = ButtonStyle.Secondary;
 
-            IncreaseCountButton.OnClick += async () =>
+            IncreaseCountButton.OnClick += async (_) =>
             {
                 _count++;
                 HandleValueChange();
             };
 
-            DescreaseCountButton.OnClick += async () =>
+            DescreaseCountButton.OnClick += async (_) =>
             {
                 _count--;
                 HandleValueChange();
             };
 
-            ChangeButtonNaming.OnClick += async () =>
+            ChangeButtonNaming.OnClick += async (_) =>
             {
                 if (isVocal)
                 {
@@ -93,7 +93,7 @@ namespace Discord.Net.MVVM.Examples
                 }
             };
 
-            EnableSelectMenuButton.OnClick += async () =>
+            EnableSelectMenuButton.OnClick += async (_) =>
             {
                 ActionSelectMenu.IsControlActive = !ActionSelectMenu.IsControlActive;
                 switch (ActionSelectMenu.IsControlActive)
@@ -107,7 +107,7 @@ namespace Discord.Net.MVVM.Examples
                 }
             };
 
-            ActionSelectMenu.OnSelect += async (values) =>
+            ActionSelectMenu.OnSelect += async (_, values) =>
             {
                 var operation = values.First();
                 switch (operation)

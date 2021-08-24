@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Discord.WebSocket;
 
 namespace Discord.Net.MVVM.View.Controls
 {
@@ -37,18 +38,18 @@ namespace Discord.Net.MVVM.View.Controls
             return selectMenuBuilder.Build();
         }
 
-        public event Func<IReadOnlyCollection<string>, Task> OnSelect;
+        public event Func<SocketMessageComponent, IReadOnlyCollection<string>, Task> OnSelect;
 
-        internal override async Task FireEvent()
+        internal override async Task FireEvent(SocketMessageComponent interactionComponent)
         {
             throw new System.NotImplementedException();
         }
 
-        internal override async Task FireEvent(IReadOnlyCollection<string> values)
+        internal override async Task FireEvent(SocketMessageComponent interactionComponent, IReadOnlyCollection<string> values)
         {
             if (OnSelect is not null)
             {
-                await OnSelect.Invoke(values);
+                await OnSelect.Invoke(interactionComponent, values);
             }
         }
     }
