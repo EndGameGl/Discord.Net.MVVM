@@ -37,7 +37,7 @@ namespace Discord.Net.MVVM
         {
         }
 
-        public virtual async Task HandleInteractionCreated(SocketMessageComponent interaction)
+        public virtual async Task HandleMessageCommandExecuted(SocketMessageCommand socketMessageCommand)
         {
         }
 

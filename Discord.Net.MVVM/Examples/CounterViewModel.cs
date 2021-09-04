@@ -5,43 +5,9 @@ using Discord.WebSocket;
 
 namespace Discord.Net.MVVM.Examples
 {
-    public class CounterViewModel : DiscordViewModel
+    public partial class CounterViewModel : DiscordViewModel
     {
         private int _count;
-
-        private readonly DiscordSelectMenu ActionSelectMenu = new()
-        {
-            IsControlActive = false,
-            MinSelectableValues = 1,
-            MaxSelectableValues = 1,
-            Id = "ActionSelectMenu",
-            Label = "Choose operation",
-            Options =
-            {
-                new DiscordSelectMenuOption("Increment", "inc"),
-                new DiscordSelectMenuOption("Decrement", "dec")
-            }
-        };
-
-        private readonly DiscordButton ChangeButtonNaming = new("ChangeNaming", "Change naming")
-        {
-            IsControlActive = true
-        };
-
-        private readonly DiscordButton DescreaseCountButton = new("DecreaseId", "-1")
-        {
-            IsControlActive = true
-        };
-
-        private readonly DiscordButton EnableSelectMenuButton = new("EnableSelectMenuButton", "Enable select menu")
-        {
-            IsControlActive = true
-        };
-
-        private readonly DiscordButton IncreaseCountButton = new("IncreaseId", "+1")
-        {
-            IsControlActive = true
-        };
 
         private bool isVocal;
 
@@ -159,5 +125,47 @@ namespace Discord.Net.MVVM.Examples
                 ViewBody.Embed.ModifyContent(eb.Build());
             }
         }
+    }
+
+    public partial class CounterViewModel
+    {
+        private readonly DiscordSelectMenu ActionSelectMenu =
+            new()
+            {
+                IsControlActive = false,
+                MinSelectableValues = 1,
+                MaxSelectableValues = 1,
+                Id = nameof(ActionSelectMenu),
+                Placeholder = "Choose operation",
+                Options =
+                {
+                    new DiscordSelectMenuOption("Increment", "inc"),
+                    new DiscordSelectMenuOption("Decrement", "dec")
+                }
+            };
+
+        private readonly DiscordButton ChangeButtonNaming =
+            new(nameof(ChangeButtonNaming), "Change naming")
+            {
+                IsControlActive = true
+            };
+
+        private readonly DiscordButton DescreaseCountButton =
+            new(nameof(DescreaseCountButton), "-1")
+            {
+                IsControlActive = true
+            };
+
+        private readonly DiscordButton EnableSelectMenuButton =
+            new(nameof(EnableSelectMenuButton), "Enable select menu")
+            {
+                IsControlActive = true
+            };
+
+        private readonly DiscordButton IncreaseCountButton =
+            new(nameof(IncreaseCountButton), "+1")
+            {
+                IsControlActive = true
+            };
     }
 }

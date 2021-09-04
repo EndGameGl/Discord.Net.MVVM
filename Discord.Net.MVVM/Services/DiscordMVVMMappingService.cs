@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord.WebSocket;
 
@@ -30,7 +31,10 @@ namespace Discord.Net.MVVM.Services
             _discordSocketClient.ReactionsCleared += DiscordSocketClientOnReactionsCleared;
             _discordSocketClient.ReactionsRemovedForEmote += DiscordSocketClientOnReactionsRemovedForEmote;
 
-            _discordSocketClient.InteractionCreated += DiscordSocketClientOnInteractionCreated;
+            _discordSocketClient.ButtonExecuted += DiscordSocketClientOnButtonExecuted;
+            _discordSocketClient.SelectMenuExecuted += DiscordSocketClientOnSelectMenuExecuted;
+
+            _discordSocketClient.MessageCommandExecuted += DiscordSocketClientOnMessageCommandExecuted;
 
             _discordSocketClient.Ready += async () => { BotId = _discordSocketClient.CurrentUser.Id; };
         }
@@ -113,35 +117,10 @@ namespace Discord.Net.MVVM.Services
             Cacheable<IMessageChannel, ulong> channel,
             IEmote emote)
         {
-            if (TryGetDiscordView(message, channel, out var view))
+            if (TryGetDiscordView(message.Id, channel.Id, GetGuildIdOrNull(channel.Value), out var view))
+            {
                 if (view.HandledEvents.HasFlag(DiscordEventBindings.ReactionsRemovedForEmote))
                     await view.ReactionsRemovedForEmote(message, channel, emote);
-        }
-
-        private async Task DiscordSocketClientOnInteractionCreated(SocketInteraction interaction)
-        {
-            if (!interaction.IsValidToken)
-                return;
-            switch (interaction)
-            {
-                case SocketMessageComponent componentInteraction:
-                    if (componentInteraction.Channel is IGuildChannel guildChannel)
-                    {
-                        if (_guildViewMapping.TryGetValue(guildChannel.GuildId, out var channelViews))
-                            if (channelViews.TryGetValue(guildChannel.Id, out var messageViews))
-                                if (messageViews.TryGetValue(componentInteraction.Message.Id, out var view))
-                                    if (view.HandledEvents.HasFlag(DiscordEventBindings.InteractionCreated))
-                                        await view.InteractionCreated(componentInteraction);
-                    }
-                    else
-                    {
-                        if (_dmViewMapping.TryGetValue(componentInteraction.Channel.Id, out var messageViews))
-                            if (messageViews.TryGetValue(componentInteraction.Message.Id, out var view))
-                                if (view.HandledEvents.HasFlag(DiscordEventBindings.InteractionCreated))
-                                    await view.InteractionCreated(componentInteraction);
-                    }
-
-                    break;
             }
         }
 
@@ -149,9 +128,11 @@ namespace Discord.Net.MVVM.Services
             Cacheable<IUserMessage, ulong> message,
             Cacheable<IMessageChannel, ulong> channel)
         {
-            if (TryGetDiscordView(message, channel, out var view))
+            if (TryGetDiscordView(message.Id, channel.Id, GetGuildIdOrNull(channel.Value), out var view))
+            {
                 if (view.HandledEvents.HasFlag(DiscordEventBindings.ReactionsCleared))
                     await view.ReactionsCleared(message, channel);
+            }
         }
 
         private async Task DiscordSocketClientOnReactionRemoved(
@@ -159,9 +140,11 @@ namespace Discord.Net.MVVM.Services
             Cacheable<IMessageChannel, ulong> channel,
             SocketReaction reaction)
         {
-            if (TryGetDiscordView(message, channel, out var view))
+            if (TryGetDiscordView(message.Id, channel.Id, GetGuildIdOrNull(channel.Value), out var view))
+            {
                 if (view.HandledEvents.HasFlag(DiscordEventBindings.ReactionRemoved))
                     await view.ReactionRemoved(message, channel, reaction);
+            }
         }
 
         private async Task DiscordSocketClientOnReactionAdded(
@@ -169,36 +152,79 @@ namespace Discord.Net.MVVM.Services
             Cacheable<IMessageChannel, ulong> channel,
             SocketReaction reaction)
         {
-            if (TryGetDiscordView(message, channel, out var view))
+            if (TryGetDiscordView(message.Id, channel.Id, GetGuildIdOrNull(channel.Value), out var view))
+            {
                 if (view.HandledEvents.HasFlag(DiscordEventBindings.ReactionAdded))
                     await view.ReactionAdded(message, channel, reaction);
+            }
+        }
+
+        private async Task DiscordSocketClientOnMessageCommandExecuted(
+            SocketMessageCommand socketMessageCommand)
+        {
+            if (TryGetDiscordView(
+                messageId: socketMessageCommand.Data.Message.Id,
+                channelId: socketMessageCommand.Channel.Id,
+                guildId: GetGuildIdOrNull(socketMessageCommand.Channel),
+                out var view))
+            {
+                if (view.HandledEvents.HasFlag(DiscordEventBindings.MessageCommandExecuted))
+                {
+                    await view.OnMessageCommandExecuted(socketMessageCommand);
+                }
+            }
+        }
+
+        private async Task DiscordSocketClientOnSelectMenuExecuted(
+            SocketMessageComponent socketMessageComponent)
+        {
+            if (TryGetDiscordView(
+                messageId: socketMessageComponent.Message.Id,
+                channelId: socketMessageComponent.Channel.Id,
+                guildId: GetGuildIdOrNull(socketMessageComponent.Channel),
+                out var view))
+            {
+                if (view.HandledEvents.HasFlag(DiscordEventBindings.InteractionCreated))
+                {
+                    await view.OnSelectMenuExecuted(socketMessageComponent);
+                }
+            }
+        }
+
+        private async Task DiscordSocketClientOnButtonExecuted(
+            SocketMessageComponent socketMessageComponent)
+        {
+            if (TryGetDiscordView(
+                messageId: socketMessageComponent.Message.Id,
+                channelId: socketMessageComponent.Channel.Id,
+                guildId: GetGuildIdOrNull(socketMessageComponent.Channel),
+                out var view))
+            {
+                if (view.HandledEvents.HasFlag(DiscordEventBindings.InteractionCreated))
+                {
+                    await view.OnButtonExecuted(socketMessageComponent);
+                }
+            }
         }
 
         private bool TryGetDiscordView(
-            Cacheable<IUserMessage, ulong> message,
-            Cacheable<IMessageChannel, ulong> channel,
+            ulong messageId,
+            ulong channelId,
+            ulong? guildId,
             out DiscordView view)
         {
             view = null;
-
-            if (!channel.HasValue)
-                return false;
-
-            if (channel.Value is IGuildChannel guildChannel)
+            if (guildId.HasValue)
             {
-                if (_guildViewMapping.TryGetValue(guildChannel.GuildId, out var channelViews))
-                    if (channelViews.TryGetValue(channel.Id, out var messageViews))
-                        if (messageViews.TryGetValue(message.Id, out view))
-                            return true;
+                return _guildViewMapping.TryGetValue(guildId.Value, out var channelMappings) &&
+                       channelMappings.TryGetValue(channelId, out var messageMappings) &&
+                       messageMappings.TryGetValue(messageId, out view);
             }
             else
             {
-                if (_dmViewMapping.TryGetValue(channel.Id, out var messageViews))
-                    if (messageViews.TryGetValue(message.Id, out view))
-                        return true;
+                return _dmViewMapping.TryGetValue(channelId, out var messageMappings) &&
+                       messageMappings.TryGetValue(messageId, out view);
             }
-
-            return false;
         }
 
         public async Task CreateView(DiscordViewModel viewModel, IMessageChannel channel)
@@ -260,6 +286,16 @@ namespace Discord.Net.MVVM.Services
                     if (messageViews.TryRemove(messageId, out var messageView))
                         await messageView.DisposeAsync();
             }
+        }
+
+        private ulong? GetGuildIdOrNull(IMessageChannel messageChannel)
+        {
+            if (messageChannel is IGuildChannel guildChannel)
+            {
+                return guildChannel.GuildId;
+            }
+
+            return null;
         }
     }
 }

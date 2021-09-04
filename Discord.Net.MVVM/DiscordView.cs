@@ -122,24 +122,23 @@ namespace Discord.Net.MVVM
             await AfterEventHandled();
         }
 
-        public async Task InteractionCreated(
-            SocketMessageComponent interaction)
+        public async Task OnMessageCommandExecuted(SocketMessageCommand socketMessageCommand)
         {
-            switch (interaction.Data.Type)
-            {
-                case ComponentType.Button:
-                    if (Body.Components.ButtonMappings.TryGetValue(interaction.Data.CustomId, out var button))
-                        await button.FireEvent(interaction);
+            await ViewModel.HandleMessageCommandExecuted(socketMessageCommand);
+            await AfterEventHandled();
+        }
+        
+        public async Task OnSelectMenuExecuted(SocketMessageComponent interaction)
+        {
+            if (Body.Components.ButtonMappings.TryGetValue(interaction.Data.CustomId, out var selectMenu))
+                await selectMenu.FireEvent(interaction, interaction.Data.Values);
+            await AfterEventHandled();
+        }
 
-                    break;
-                case ComponentType.SelectMenu:
-                    if (Body.Components.ButtonMappings.TryGetValue(interaction.Data.CustomId, out var selectMenu))
-                        await selectMenu.FireEvent(interaction, interaction.Data.Values);
-
-                    break;
-            }
-
-            await ViewModel.HandleInteractionCreated(interaction);
+        public async Task OnButtonExecuted(SocketMessageComponent interaction)
+        {
+            if (Body.Components.ButtonMappings.TryGetValue(interaction.Data.CustomId, out var button))
+                await button.FireEvent(interaction);
             await AfterEventHandled();
         }
 

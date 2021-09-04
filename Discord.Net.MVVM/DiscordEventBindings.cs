@@ -9,6 +9,7 @@ namespace Discord.Net.MVVM
         ReactionRemoved = 1 << 1,
         ReactionsCleared = 1 << 2,
         ReactionsRemovedForEmote = 1 << 3,
-        InteractionCreated = 1 << 4
+        InteractionCreated = 1 << 4,
+        MessageCommandExecuted = 1 << 5
     }
 }

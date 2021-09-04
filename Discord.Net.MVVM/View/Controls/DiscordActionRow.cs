@@ -15,7 +15,10 @@ namespace Discord.Net.MVVM.View.Controls
         {
             var builder = new ActionRowBuilder();
 
-            foreach (var control in Controls) builder.WithComponent(control.ToComponent());
+            foreach (var control in Controls)
+            {
+                builder.AddComponent(control.ToComponent());
+            }
 
             return builder.Build();
         }
@@ -35,7 +38,7 @@ namespace Discord.Net.MVVM.View.Controls
         {
             var builder = new ActionRowBuilder();
 
-            foreach (var control in Controls) builder.WithComponent(control.ToComponent());
+            foreach (var control in Controls) builder.AddComponent(control.ToComponent());
 
             return builder;
         }

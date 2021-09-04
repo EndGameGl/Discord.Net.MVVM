@@ -20,6 +20,7 @@ namespace Discord.Net.MVVM.View.Controls
         public IEmote Emote { get; set; }
         public ButtonStyle Style { get; set; } = ButtonStyle.Success;
         public string Url { get; set; } = null;
+        public string Label { get; set; }
 
         public override DiscordControlType Type => DiscordControlType.Button;
 

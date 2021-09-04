@@ -18,7 +18,6 @@ namespace Discord.Net.MVVM.View.Controls
         {
             var selectMenuBuilder = new SelectMenuBuilder
             {
-                Label = Label,
                 CustomId = Id,
                 MinValues = MinSelectableValues,
                 MaxValues = MaxSelectableValues,
