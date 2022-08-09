@@ -1,10 +1,15 @@
 ﻿namespace Discord.Net.MVVM.View
 {
-    public class DiscordTrackableContent : IDiscordMessageTrackablePart
+    public sealed class DiscordTrackableContent : IDiscordMessageTrackablePart
     {
-        public string Content { get; private set; }
+        public string? Content { get; private set; }
         public bool HasValue => !string.IsNullOrWhiteSpace(Content);
         public bool UpdateNeeded { get; private set; }
+
+        internal DiscordTrackableContent()
+        {
+            Content = null;
+        }
 
         public void SetUpdateNeeded(bool value)
         {
@@ -16,7 +21,7 @@
             Modify(null);
         }
 
-        public void Modify(string value)
+        public void Modify(string? value)
         {
             if (Content == value)
                 return;

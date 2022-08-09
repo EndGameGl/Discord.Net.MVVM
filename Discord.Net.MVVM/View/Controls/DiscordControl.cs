@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Discord.WebSocket;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using Discord.WebSocket;
 
 namespace Discord.Net.MVVM.View.Controls
 {
@@ -9,11 +9,14 @@ namespace Discord.Net.MVVM.View.Controls
         public abstract DiscordControlType Type { get; }
         public string Id { get; set; }
         public bool IsControlActive { get; set; }
-
+        public bool Disabled { get; set; } = false;
         public abstract IMessageComponent ToComponent();
-        internal abstract Task FireEvent(SocketMessageComponent interactionComponent);
+        
+        internal abstract Task FireEvent(
+            SocketMessageComponent interactionComponent);
 
-        internal abstract Task FireEvent(SocketMessageComponent interactionComponent,
+        internal abstract Task FireEvent(
+            SocketMessageComponent interactionComponent,
             IReadOnlyCollection<string> values);
     }
 }

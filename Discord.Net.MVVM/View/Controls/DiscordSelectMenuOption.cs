@@ -18,7 +18,7 @@
         {
             var selectMenuOptionBuilder = new SelectMenuOptionBuilder
             {
-                Default = IsDefault,
+                IsDefault = IsDefault,
                 Value = Value,
                 Description = Description,
                 Emote = Emote,

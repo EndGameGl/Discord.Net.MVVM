@@ -21,16 +21,10 @@
         public DiscordTrackableComponent Components { get; } = new();
 
         /// <summary>
-        ///     Component that represents message reactions
-        /// </summary>
-        public DiscordTrackableReactions Reactions { get; } = new();
-
-        /// <summary>
         ///     Checks whether any of the components were updated
         /// </summary>
         public bool HasAnyUpdates => Content.UpdateNeeded ||
                                      Embed.UpdateNeeded ||
-                                     Reactions.UpdateNeeded ||
                                      Components.UpdateNeeded;
     }
 }

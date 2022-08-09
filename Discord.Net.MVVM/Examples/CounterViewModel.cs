@@ -1,29 +1,24 @@
-﻿using System.Linq;
+﻿using Discord.Net.MVVM.View.Controls;
+using System.Linq;
 using System.Threading.Tasks;
-using Discord.Net.MVVM.View.Controls;
-using Discord.WebSocket;
 
 namespace Discord.Net.MVVM.Examples
 {
     public partial class CounterViewModel : DiscordViewModel
     {
         private int _count;
+        private bool _isVocal;
 
-        private bool isVocal;
-
-        public override DiscordEventBindings HandledEvents { get; } =
-            DiscordEventBindings.ReactionAdded |
-            DiscordEventBindings.ReactionRemoved |
-            DiscordEventBindings.InteractionCreated;
+        public override bool DisposeOnMessageDeletion => true;
 
         public override async Task OnCreate()
         {
-            ViewBody.Content.Modify($"Count is {_count}");
-            ViewBody.Components.AddButton(IncreaseCountButton, 0);
-            ViewBody.Components.AddButton(DescreaseCountButton, 1);
-            ViewBody.Components.AddButton(ChangeButtonNaming, 2);
-            ViewBody.Components.AddButton(EnableSelectMenuButton, 3);
-            ViewBody.Components.AddButton(ActionSelectMenu, 4);
+            ModifyText($"Count is {_count}");
+            AddButton(IncreaseCountButton, 0);
+            AddButton(DescreaseCountButton, 0);
+            AddButton(ChangeButtonNaming, 1);
+            AddButton(EnableSelectMenuButton, 2);
+            AddSelectMenu(ActionSelectMenu, 3);
 
             ChangeButtonNaming.Style = ButtonStyle.Secondary;
 
@@ -41,17 +36,17 @@ namespace Discord.Net.MVVM.Examples
 
             ChangeButtonNaming.OnClick += async _ =>
             {
-                if (isVocal)
+                if (_isVocal)
                 {
                     IncreaseCountButton.Label = "+1";
                     DescreaseCountButton.Label = "-1";
-                    isVocal = false;
+                    _isVocal = false;
                 }
                 else
                 {
                     IncreaseCountButton.Label = "Increment";
                     DescreaseCountButton.Label = "Decrement";
-                    isVocal = true;
+                    _isVocal = true;
                 }
             };
 
@@ -86,24 +81,9 @@ namespace Discord.Net.MVVM.Examples
             };
         }
 
-        public override async Task HandleReactionAdded(SocketReaction reaction)
+        public override ValueTask DisposeAsync()
         {
-            _count++;
-            HandleValueChange();
-            ViewBody.Reactions.AddReaction(reaction.Emote);
-        }
-
-        public override async Task HandleReactionRemoved(SocketReaction reaction)
-        {
-            _count--;
-            HandleValueChange();
-            ViewBody.Reactions.RemoveReaction(reaction.Emote);
-        }
-
-        public override async ValueTask DisposeAsync()
-        {
-            await base.DisposeAsync();
-            _count = 0;
+            return ValueTask.CompletedTask;
         }
 
         private void HandleValueChange()

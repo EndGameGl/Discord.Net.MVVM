@@ -1,10 +1,15 @@
 ﻿namespace Discord.Net.MVVM.View
 {
-    public class DiscordTrackableEmbed : IDiscordMessageTrackablePart
+    public sealed class DiscordTrackableEmbed : IDiscordMessageTrackablePart
     {
-        public Embed Embed { get; private set; }
+        public Embed? Embed { get; private set; }
         public bool HasValue => Embed is not null;
         public bool UpdateNeeded { get; private set; }
+
+        internal DiscordTrackableEmbed()
+        {
+            Embed = null;
+        }
 
         public void SetUpdateNeeded(bool value)
         {
@@ -16,7 +21,7 @@
             ModifyContent(null);
         }
 
-        public void ModifyContent(Embed value)
+        public void ModifyContent(Embed? value)
         {
             if (Embed is not null && value is null)
             {
@@ -32,7 +37,10 @@
                 return;
             }
 
-            if (!AreEmbedsEqual(Embed, value))
+            if (Embed is null && value is null)
+                return;
+
+            if (!AreEmbedsEqual(Embed!, value!))
             {
                 Embed = value;
                 SetUpdateNeeded(true);

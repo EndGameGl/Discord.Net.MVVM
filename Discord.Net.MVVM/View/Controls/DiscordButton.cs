@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Discord.WebSocket;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Discord.WebSocket;
 
 namespace Discord.Net.MVVM.View.Controls
 {
@@ -16,7 +16,6 @@ namespace Discord.Net.MVVM.View.Controls
             Label = label;
         }
 
-        public bool Disabled { get; set; } = false;
         public IEmote Emote { get; set; }
         public ButtonStyle Style { get; set; } = ButtonStyle.Success;
         public string Url { get; set; } = null;
@@ -29,7 +28,7 @@ namespace Discord.Net.MVVM.View.Controls
             var bb = new ButtonBuilder
             {
                 CustomId = Id,
-                Disabled = Disabled,
+                IsDisabled = Disabled,
                 Label = Label,
                 Emote = Emote,
                 Style = Style,
@@ -44,7 +43,8 @@ namespace Discord.Net.MVVM.View.Controls
                 await OnClick.Invoke(interactionComponent);
         }
 
-        internal override async Task FireEvent(SocketMessageComponent interactionComponent,
+        internal override async Task FireEvent(
+            SocketMessageComponent interactionComponent,
             IReadOnlyCollection<string> values)
         {
             throw new NotImplementedException();
@@ -53,6 +53,6 @@ namespace Discord.Net.MVVM.View.Controls
         /// <summary>
         ///     Is called when this button is clicked
         /// </summary>
-        public event Func<SocketMessageComponent, Task> OnClick;
+        public event Func<SocketMessageComponent, Task>? OnClick;
     }
 }

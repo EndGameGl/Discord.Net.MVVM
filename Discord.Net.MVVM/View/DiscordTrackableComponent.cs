@@ -1,14 +1,17 @@
-﻿using System.Collections.Concurrent;
+﻿using Discord.Net.MVVM.View.Controls;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using Discord.Net.MVVM.View.Controls;
 
 namespace Discord.Net.MVVM.View
 {
-    public class DiscordTrackableComponent : IDiscordMessageTrackablePart
+    public sealed class DiscordTrackableComponent : IDiscordMessageTrackablePart
     {
-        public DiscordTrackableComponent()
+        internal DiscordTrackableComponent()
         {
-            for (var i = 0; i < 5; i++) ActionRows[i] = new DiscordActionRow();
+            for (var i = 0; i < 5; i++)
+            {
+                ActionRows[i] = new DiscordActionRow();
+            }
         }
 
         public DiscordActionRow[] ActionRows { get; } = new DiscordActionRow[5];
@@ -24,7 +27,10 @@ namespace Discord.Net.MVVM.View
 
         public void ResetContent()
         {
-            for (var i = 0; i < 5; i++) ActionRows[i] = new DiscordActionRow();
+            for (var i = 0; i < 5; i++)
+            {
+                ActionRows[i] = new DiscordActionRow();
+            }
         }
 
         public MessageComponent BuildComponent()

@@ -1,55 +1,58 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using Discord.Net.MVVM.Models;
 using Discord.Net.MVVM.View;
 using Discord.WebSocket;
+using System;
+using System.Threading.Tasks;
+using Discord.Net.MVVM.View.Controls;
 
 namespace Discord.Net.MVVM
 {
     public abstract class DiscordViewModel : IAsyncDisposable
     {
-        internal bool IsDisposalRequested { get; private set; }
-        internal bool DeleteMessageAfterDisposal { get; private set; } = true;
-        protected DiscordViewBody ViewBody { get; private set; }
-        public abstract DiscordEventBindings HandledEvents { get; }
+        private DiscordViewSharedData _sharedData;
 
+        protected DiscordViewBody ViewBody => _sharedData.ViewBody;
 
-        public virtual async ValueTask DisposeAsync()
+        public abstract ValueTask DisposeAsync();
+        public abstract bool DisposeOnMessageDeletion { get; }
+
+        public abstract Task OnCreate();
+
+        internal void InjectInternalData(DiscordViewSharedData sharedData)
         {
+            _sharedData = sharedData;
         }
 
-        public virtual async Task OnCreate()
+        protected void AddButton(DiscordButton discordButton, int row = 0)
         {
+            AddHandledEvent(DiscordEventBindings.ButtonExecuted);
+            ViewBody.Components.AddButton(discordButton, row);
         }
 
-        public virtual async Task HandleReactionAdded(SocketReaction reaction)
+        protected void AddSelectMenu(DiscordSelectMenu selectMenu, int row = 0)
         {
+            AddHandledEvent(DiscordEventBindings.SelectMenuExecuted);
+            ViewBody.Components.AddButton(selectMenu, row);
         }
 
-        public virtual async Task HandleReactionRemoved(SocketReaction reaction)
+        protected void ModifyText(string? text)
         {
+            ViewBody.Content.Modify(text);
+        }
+        
+        protected void RequestDisposal(bool deleteMessage, bool disposeBeforeLastUpdate)
+        {
+            _sharedData.RequestDisposal(deleteMessage, disposeBeforeLastUpdate);
         }
 
-        public virtual async Task HandleReactionsCleared()
+        protected void AddHandledEvent(DiscordEventBindings discordEventBindings)
         {
+            _sharedData.HandledEvents.Add(discordEventBindings);
         }
 
-        public virtual async Task HandleReactionsRemovedForEmote(IEmote emote)
+        protected void RemoveHandledEvent(DiscordEventBindings discordEventBindings)
         {
-        }
-
-        public virtual async Task HandleMessageCommandExecuted(SocketMessageCommand socketMessageCommand)
-        {
-        }
-
-        internal void InjectData(DiscordViewBody viewBody)
-        {
-            ViewBody = viewBody;
-        }
-
-        protected async Task RequestDisposal(bool deleteMessage)
-        {
-            IsDisposalRequested = true;
-            DeleteMessageAfterDisposal = deleteMessage;
+            _sharedData.HandledEvents.Remove(discordEventBindings);
         }
     }
 }

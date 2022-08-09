@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Discord.WebSocket;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Discord.WebSocket;
 
 namespace Discord.Net.MVVM.View.Controls
 {
@@ -21,7 +21,8 @@ namespace Discord.Net.MVVM.View.Controls
                 CustomId = Id,
                 MinValues = MinSelectableValues,
                 MaxValues = MaxSelectableValues,
-                Placeholder = Placeholder
+                Placeholder = Placeholder,
+                IsDisabled = Disabled
             };
 
             if (Options.Count > 0) selectMenuBuilder.Options = new List<SelectMenuOptionBuilder>();

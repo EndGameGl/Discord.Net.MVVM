@@ -7,7 +7,7 @@ namespace Discord.Net.MVVM
     {
         public static IServiceCollection UseDiscordNetMvvm(this IServiceCollection serviceCollection)
         {
-            return serviceCollection.AddSingleton<DiscordMVVMMappingService>();
+            return serviceCollection.AddSingleton<DiscordMvvmService>();
         }
     }
 }

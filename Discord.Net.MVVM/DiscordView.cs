@@ -1,10 +1,11 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using Discord.Net.MVVM.Models;
 using Discord.Net.MVVM.Services;
-using Discord.Net.MVVM.View;
-using Discord.Net.MVVM.View.Reactions;
 using Discord.Rest;
 using Discord.WebSocket;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Discord.Net.MVVM.View;
 
 namespace Discord.Net.MVVM
 {
@@ -13,167 +14,104 @@ namespace Discord.Net.MVVM
     /// </summary>
     public sealed class DiscordView : IAsyncDisposable
     {
-        private readonly DiscordMVVMMappingService _mappingService;
+        internal DiscordViewSharedData SharedData { get; }
 
         internal DiscordView(
             DiscordViewModel viewModel,
-            DiscordEventBindings eventBindings,
-            DiscordMVVMMappingService service)
+            DiscordMvvmService service)
         {
+            SharedData = new DiscordViewSharedData()
+            {
+                DiscordMvvmService = service,
+                ViewBody = new DiscordViewBody()
+            };
+
             ViewModel = viewModel;
-            HandledEvents = eventBindings;
-            _mappingService = service;
         }
 
-        public RestUserMessage Message { get; private set; }
-        private DiscordViewBody Body { get; } = new();
-        private DiscordViewModel ViewModel { get; }
-
-        public DiscordEventBindings HandledEvents { get; }
+        internal DiscordViewModel ViewModel { get; }
 
         public async ValueTask DisposeAsync()
         {
+            await SharedData.DisposeAsync();
             await ViewModel.DisposeAsync();
         }
 
-        public async Task Render(IMessageChannel channel)
+        public async Task Render(IDiscordInteraction socketInteraction)
         {
-            ViewModel.InjectData(Body);
+            ViewModel.InjectInternalData(SharedData);
 
             await ViewModel.OnCreate();
 
-            Message = (RestUserMessage)await channel.SendMessageAsync(
-                Body.Content.Content,
-                false,
-                Body.Embed.Embed,
-                component: Body.Components.BuildComponent());
+            await socketInteraction.RespondAsync(
+                text: SharedData.ViewBody.Content.Content,
+                embed: SharedData.ViewBody.Embed.Embed,
+                components: SharedData.ViewBody.Components.BuildComponent());
+
+            SharedData.Message = await socketInteraction.GetOriginalResponseAsync();
         }
 
-        private async Task Update()
+        private async Task Update(SocketInteraction interaction)
         {
-            await Message.ModifyAsync(x =>
+            await interaction.DeferAsync();
+            await interaction.ModifyOriginalResponseAsync(x =>
             {
-                if (Body.Content.UpdateNeeded)
+                if (SharedData.ViewBody.Content.UpdateNeeded)
                 {
-                    x.Content = Body.Content.Content;
-                    Body.Content.SetUpdateNeeded(false);
+                    x.Content = SharedData.ViewBody.Content.Content;
+                    SharedData.ViewBody.Content.SetUpdateNeeded(false);
                 }
 
-                if (Body.Embed.UpdateNeeded)
+                if (SharedData.ViewBody.Embed.UpdateNeeded)
                 {
-                    x.Embed = Body.Embed.Embed;
-                    Body.Embed.SetUpdateNeeded(false);
+                    x.Embed = SharedData.ViewBody.Embed.Embed;
+                    SharedData.ViewBody.Embed.SetUpdateNeeded(false);
                 }
 
-                if (Body.Components.UpdateNeeded)
+                if (SharedData.ViewBody.Components.UpdateNeeded)
                 {
-                    x.Components = Body.Components.BuildComponent();
-                    Body.Components.SetUpdateNeeded(false);
+                    x.Components = SharedData.ViewBody.Components.BuildComponent();
+                    SharedData.ViewBody.Components.SetUpdateNeeded(false);
                 }
             });
+        }
 
-            if (Body.Reactions.UpdateNeeded)
+        private async Task HandleDisposes()
+        {
+            await SharedData.DisposeAsync();
+            await ViewModel.DisposeAsync();
+            await SharedData.DiscordMvvmService.RemoveView(
+                SharedData.ChannelId,
+                SharedData.MessageId);
+        }
+
+        internal async Task HandleButtonExecuted(
+            SocketMessageComponent buttonExecutedEvent)
+        {
+            if (SharedData.ViewBody.Components.ButtonMappings.TryGetValue(
+                    buttonExecutedEvent.Data.CustomId,
+                    out var button))
             {
-                if (Body.Reactions.ReactionRequests.Count > 1)
+                if (button.IsControlActive)
                 {
-                    while (Body.Reactions.ReactionRequests.TryDequeue(out var reactionRequest))
-                        await HandleReactionRequest(reactionRequest);
-                }
-                else
-                {
-                    var req = Body.Reactions.ReactionRequests.Dequeue();
-                    await HandleReactionRequest(req);
+                    await button.FireEvent(buttonExecutedEvent);
+                    await Update(buttonExecutedEvent);
                 }
             }
         }
 
-        public async Task ReactionAdded(
-            Cacheable<IUserMessage, ulong> message,
-            Cacheable<IMessageChannel, ulong> channel,
-            SocketReaction reaction)
+        internal async Task HandleSelectMenuExecuted(
+            SocketMessageComponent selectMenuEvent)
         {
-            await ViewModel.HandleReactionAdded(reaction);
-            await AfterEventHandled();
-        }
-
-        public async Task ReactionRemoved(
-            Cacheable<IUserMessage, ulong> message,
-            Cacheable<IMessageChannel, ulong> channel,
-            SocketReaction reaction)
-        {
-            await ViewModel.HandleReactionRemoved(reaction);
-            await AfterEventHandled();
-        }
-
-        public async Task ReactionsCleared(
-            Cacheable<IUserMessage, ulong> message,
-            Cacheable<IMessageChannel, ulong> channel)
-        {
-            await ViewModel.HandleReactionsCleared();
-            await AfterEventHandled();
-        }
-
-        public async Task ReactionsRemovedForEmote(
-            Cacheable<IUserMessage, ulong> message,
-            Cacheable<IMessageChannel, ulong> channel,
-            IEmote emote)
-        {
-            await ViewModel.HandleReactionsRemovedForEmote(emote);
-            await AfterEventHandled();
-        }
-
-        public async Task OnMessageCommandExecuted(SocketMessageCommand socketMessageCommand)
-        {
-            await ViewModel.HandleMessageCommandExecuted(socketMessageCommand);
-            await AfterEventHandled();
-        }
-        
-        public async Task OnSelectMenuExecuted(SocketMessageComponent interaction)
-        {
-            if (Body.Components.ButtonMappings.TryGetValue(interaction.Data.CustomId, out var selectMenu))
-                await selectMenu.FireEvent(interaction, interaction.Data.Values);
-            await AfterEventHandled();
-        }
-
-        public async Task OnButtonExecuted(SocketMessageComponent interaction)
-        {
-            if (Body.Components.ButtonMappings.TryGetValue(interaction.Data.CustomId, out var button))
-                await button.FireEvent(interaction);
-            await AfterEventHandled();
-        }
-
-        private async Task HandleReactionRequest(DiscordReactionRequest request)
-        {
-            switch (request.Type)
+            if (SharedData.ViewBody.Components.ButtonMappings.TryGetValue(
+                    selectMenuEvent.Data.CustomId,
+                    out var button))
             {
-                case DiscordReactionRequestType.Add:
-                    await Message.AddReactionAsync(request.Reaction);
-                    break;
-                case DiscordReactionRequestType.RemoveSelf:
-                    await Message.RemoveReactionAsync(request.Reaction, DiscordMVVMMappingService.BotId);
-                    break;
-                case DiscordReactionRequestType.RemoveAllOfType:
-                    await Message.RemoveAllReactionsForEmoteAsync(request.Reaction);
-                    break;
-                case DiscordReactionRequestType.RemoveAll:
-                    await Message.RemoveAllReactionsAsync();
-                    break;
-            }
-        }
-
-        private async Task AfterEventHandled()
-        {
-            if (Body.HasAnyUpdates)
-                await Update();
-            if (ViewModel.IsDisposalRequested)
-            {
-                await ViewModel.DisposeAsync();
-                if (ViewModel.DeleteMessageAfterDisposal) await Message.DeleteAsync();
-
-                ulong? guildId = null;
-                if (Message.Channel is IGuildChannel guildChannel) guildId = guildChannel.GuildId;
-
-                await _mappingService.RemoveView(Message.Channel.Id, Message.Id, guildId);
+                if (button.IsControlActive)
+                {
+                    await button.FireEvent(selectMenuEvent, selectMenuEvent.Data.Values);
+                    await Update(selectMenuEvent);
+                }
             }
         }
     }

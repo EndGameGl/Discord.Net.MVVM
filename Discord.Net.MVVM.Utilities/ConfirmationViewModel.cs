@@ -18,27 +18,32 @@ namespace Discord.Net.MVVM.Utilities
         };
 
         private readonly string _text;
-        private Action _onDecline;
-        private Action _onSuccess;
+        private Func<Task> _onDecline;
+        private Func<Task> _onSuccess;
 
-        public ConfirmationViewModel(string text, Action onSuccess, Action onDecline)
+        public override bool DisposeOnMessageDeletion => true;
+
+        public ConfirmationViewModel(
+            string text,
+            Func<Task> onSuccess,
+            Func<Task> onDecline)
         {
             _text = text;
             _onSuccess = onSuccess;
             _onDecline = onDecline;
         }
 
-        public override DiscordEventBindings HandledEvents => DiscordEventBindings.InteractionCreated;
-
-        public override async Task OnCreate()
+        public override Task OnCreate()
         {
-            ViewBody.Content.Modify(_text);
-            ViewBody.Components.AddButton(_confirmButton, 0);
-            ViewBody.Components.AddButton(_declineButton, 0);
+            ModifyText(_text);
+            AddButton(_confirmButton, 0);
+            AddButton(_declineButton, 0);
 
-            _confirmButton.OnClick += async _ => { _onSuccess?.Invoke(); };
+            _confirmButton.OnClick += async _ => { await _onSuccess?.Invoke(); };
 
-            _declineButton.OnClick += async _ => { _onDecline?.Invoke(); };
+            _declineButton.OnClick += async _ => { await _onDecline?.Invoke(); };
+
+            return Task.CompletedTask;
         }
 
         public override ValueTask DisposeAsync()
